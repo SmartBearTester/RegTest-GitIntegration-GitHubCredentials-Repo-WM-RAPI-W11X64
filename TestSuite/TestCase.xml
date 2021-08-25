@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:testCase id="9eaff8d2-9810-41a9-9319-921814981fb8" discardOkResults="false" failOnError="true" failTestCaseOnErrors="true" keepSession="false" name="TestCase" searchProperties="true" timeout="0" xmlns:con="http://eviware.com/soapui/config">
+  <con:settings>
+    <con:setting id="9eaff8d2-9810-41a9-9319-921814981fb8fileName">TestCase</con:setting>
+  </con:settings>
+  <con:testStep type="groovy" name="Groovy Script" id="22d32e20-e9dc-4cce-be1e-f928b9c251c1">
+    <con:settings/>
+    <con:config>
+      <script><![CDATA[import com.smartbear.ready.core.ReadyApiCoreModule;
+import java.util.Properties;
+
+def getBuildDate()
+{
+  Properties buildInfoProperties = new Properties();
+  String buildTimestamp;
+  String version;
+  buildInfoProperties.load(ReadyApiCoreModule.class.getResourceAsStream(ReadyApiCoreModule.READY_API_BUILDINFO_PROPERTIES));
+  buildTimestamp = buildInfoProperties.getProperty('build.date');
+  version = ReadyApiCoreModule.getVersion();
+  return version + ' Build Date: ' + buildTimestamp;
+}
+
+def findFiles(String folderPath, String nameContains, String extension)
+{
+  def dir = new File(folderPath)
+  def foundFiles = dir.listFiles(new FilenameFilter()
+  {
+        public boolean accept(File dir1, String name) 
+        {
+           return name.toLowerCase().endsWith(extension)&&name.toLowerCase().contains(nameContains.toLowerCase());
+        }
+     })
+     return foundFiles;
+}
+
+def findValueInList(def list, def value)
+{
+   def i;
+   for (i = 0; i < list.length; i++)
+     if (list[i].toLowerCase().contains(value.toLowerCase()))
+       return i;
+   return -1;    
+}
+
+def readScenarioResultsFromFiles(String folder, List files, List perfValues)
+{
+  def i, j;
+  def foundFiles;
+  def fileObj;
+  def fileString;
+  def CurValue;
+  List results = [];
+  results.add(getBuildDate());
+  for (i = 0; i < files.size; i++)
+  {
+    foundFiles = findFiles(folder, files[i], '.csv');
+    log.info foundFiles.toString();
+    for(j = 0; j < perfValues.size; j++)
+    {
+      if (foundFiles.length > 0) 
+      {
+        fileObj = new File(foundFiles[0].toString());
+        fileString = fileObj.getText('UTF-8').toString();
+        results.add(getPerfValueFromString(fileString, perfValues[j]));
+      }
+      else
+        results.add('');
+    }
+  }
+  return results;
+}
+
+def isArrayHasOnlyEmptyStrings(List array)
+{
+  for (i = 1; i < array.size; i++)
+    if (array[i] != '') return false;
+  return true;
+}]]></script>
+    </con:config>
+  </con:testStep>
+  <con:properties/>
+  <con:reportParameters/>
+</con:testCase>
